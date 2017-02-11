@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
 <jardesc>
     <jar path="C:/Program Files (x86)/Wylas Timing - Recorder/adapters/unami-adapter.jar"/>
-    <options buildIfNeeded="true" compress="true" descriptionLocation="/WylasAdapter/package-adapter.jardesc" exportErrors="false" exportWarnings="false" includeDirectoryEntries="true" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/WylasFileAdapter/package-adapter.jardesc" exportErrors="false" exportWarnings="false" includeDirectoryEntries="true" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
@@ -11,6 +11,6 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=WylasAdapter/src"/>
+        <javaElement handleIdentifier="=WylasFileAdapter/src"/>
     </selectedElements>
 </jardesc>

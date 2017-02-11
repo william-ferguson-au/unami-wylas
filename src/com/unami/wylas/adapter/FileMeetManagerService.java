@@ -3,12 +3,19 @@
  */
 package com.unami.wylas.adapter;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-import au.com.xandar.meetmanager.Course;
 import au.com.xandar.meetmanager.DQItem;
 import au.com.xandar.meetmanager.Gender;
 import au.com.xandar.meetmanager.Meet;
@@ -24,14 +31,28 @@ import au.com.xandar.meetmanager.Stroke;
  * @author Luciano
  *
  */
-public class UnamiMeetManagerService implements MeetManagerService {
+public class FileMeetManagerService implements MeetManagerService {
+	private DateFormat dateFormat = DateFormat.getTimeInstance(DateFormat.LONG);
 
-	private static final String FILE_LOCATION = "File Location";
+	private static final String FILE_MEET_MANAGER_ADAPTER = "File Meet Manager Adapter";
 
-	LinkedHashMap<String, String> properties = new LinkedHashMap<>();
+	protected static final String PROPERTY_NAME_DATA_FILE_LOCATION = "data.path";
+	protected static final String PROPERTY_NAME_DATE_FORMAT = "date.format";
+	protected static final String PROPERTY_NAME_MEETS_FILE_NAME_PATTERN = "meets.filename.pattern";
+	protected static final String PROPERTY_NAME_RACES_FILE_NAME_PATTERN = "races.filename.pattern";
+	protected static final String PROPERTY_NAME_RACE_ENTRIES_FILE_NAME_PATTERN = "raceentries.filename.patter";
+	protected static final String PROPERTY_NAME_FIELD_DELIMITER = "field.delimiter";
 
-	public UnamiMeetManagerService() {
-		properties.put(FILE_LOCATION, "");
+	private LinkedHashMap<String, String> properties = new LinkedHashMap<>();
+	private Map<String, Meet> meetCache = new HashMap<>();
+
+	public FileMeetManagerService() {
+		properties.put(PROPERTY_NAME_DATA_FILE_LOCATION, "");
+		properties.put(PROPERTY_NAME_DATE_FORMAT, "dd/MM");
+		properties.put(PROPERTY_NAME_MEETS_FILE_NAME_PATTERN, "meets[.]*.txt");
+		properties.put(PROPERTY_NAME_RACES_FILE_NAME_PATTERN, "races[.]*.txt");
+		properties.put(PROPERTY_NAME_RACE_ENTRIES_FILE_NAME_PATTERN, "raceentries[.]*.txt");
+		properties.put(PROPERTY_NAME_FIELD_DELIMITER, ";");
 	}
 
 	boolean started = false;
@@ -43,6 +64,7 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public LinkedHashMap<String, String> getProperties() {
+		log("properties=" + properties);
 		return properties;
 	}
 
@@ -53,7 +75,8 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public String getReadableName() {
-		return "UNAMI Meet Manager Adapter";
+		log("readableName=" + FILE_MEET_MANAGER_ADAPTER);
+		return FILE_MEET_MANAGER_ADAPTER;
 	}
 
 	/*
@@ -63,6 +86,7 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public boolean isStarted() {
+		log("started=" + started);
 		return started;
 	}
 
@@ -74,7 +98,7 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	@Override
 	public void start() {
 		started = true;
-		System.out.println(this + " started.");
+		log("started.");
 	}
 
 	/*
@@ -85,7 +109,7 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	@Override
 	public void stop() {
 		started = false;
-		System.out.println(this + " stopped.");
+		log("stopped.");
 	}
 
 	/*
@@ -95,6 +119,7 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public int getApiVersion() {
+		log("apiVersion=0");
 		return 0;
 	}
 
@@ -107,6 +132,9 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	@Override
 	public List<DQItem> getDQItems(String meetId, String raceId) {
 		List<DQItem> list = new ArrayList<>();
+
+		log("getDQItems=" + list);
+
 		return list;
 	}
 
@@ -117,14 +145,9 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public Meet getMeet(String meetId) {
-		Meet meet = new Meet();
-		meet.course = Course.ShortCourse;
-		meet.description = "property value " + properties.get(FILE_LOCATION);
-		meet.endDate = new Date();// Calendar.getInstance()
-		meet.meetId = "1";
-		meet.nrLanes = 2;
-		meet.startDate = new Date();
+		Meet meet = meetCache.get(meetId);
 
+		log("getMeet=" + meet);
 		return meet;
 	}
 
@@ -135,12 +158,17 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public List<MeetDescription> getMeetDescriptions() {
-		MeetDescription md = new MeetDescription();
-		md.description = "Unami demo meet";
-		md.meetId = "1";
-
 		List<MeetDescription> list = new ArrayList<>();
-		list.add(md);
+		Collection<Meet> meets = meetCache.values();
+		for (Meet meet : meets) {
+			MeetDescription md = new MeetDescription();
+			md.meetId = meet.meetId;
+			md.description = meet.description;
+
+			list.add(md);
+		}
+
+		log("getMeetDescriptions=" + list);
 
 		return list;
 	}
@@ -152,20 +180,21 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public List<Meet> getMeets() {
-		// TODO Auto-generated method stub
+		List<Meet> meetList = new ArrayList<>();
 
-		Meet meet = new Meet();
-		meet.course = Course.ShortCourse;
-		meet.description = "Unami demo meet";
-		meet.endDate = new Date();// Calendar.getInstance()
-		meet.meetId = "1";
-		meet.nrLanes = 2;
-		meet.startDate = new Date();
+		MeetReader reader = new MeetReader(this);
+		try {
+			meetList.addAll(reader.readAll(new File(properties.get(PROPERTY_NAME_DATA_FILE_LOCATION))));
+			for (Meet meet : meetList) {
+				meetCache.put(meet.meetId, meet);
+			}
 
-		List<Meet> list = new ArrayList<>();
-		list.add(meet);
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		}
 
-		return list;
+		log("getMeets: " + meetList);
+		return meetList;
 	}
 
 	/*
@@ -187,6 +216,8 @@ public class UnamiMeetManagerService implements MeetManagerService {
 
 		List<RaceEntry> list = new ArrayList<>();
 		list.add(re);
+
+		log("getRaceEntries=" + list);
 
 		return list;
 	}
@@ -216,6 +247,8 @@ public class UnamiMeetManagerService implements MeetManagerService {
 		List<Race> list = new ArrayList<>();
 		list.add(r);
 
+		log("getRaces=" + list);
+
 		return list;
 	}
 
@@ -229,7 +262,7 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	@Override
 	public void raceStateChanged(String meetId, String raceId, RaceState state) {
 		// TODO Auto-generated method stub
-		System.out.println("raceStateChanged[" + meetId + "," + raceId + "," + state + "]");
+		log("raceStateChanged[" + meetId + "," + raceId + "," + state + "]");
 	}
 
 	/*
@@ -239,6 +272,7 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public boolean testConnection() {
+		log(" testConnection=true");
 		return true;
 	}
 
@@ -252,7 +286,13 @@ public class UnamiMeetManagerService implements MeetManagerService {
 	@Override
 	public void updateRaceEntries(String meetId, String raceId, List<RaceEntry> entries) {
 		// TODO Auto-generated method stub
-		System.out.println("updateRaceEntries[" + meetId + "," + raceId + "," + entries + "]");
+		System.out.println(Calendar.getInstance() + ":" + this + " updateRaceEntries[" + meetId + "," + raceId + ","
+				+ entries + "]");
+	}
+
+	protected void log(String message) {
+		Date now = Calendar.getInstance().getTime();
+		System.out.println(dateFormat.format(now) + " " + this + " " + message);
 	}
 
 }
