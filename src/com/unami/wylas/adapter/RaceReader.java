@@ -4,6 +4,7 @@
 package com.unami.wylas.adapter;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 
 import au.com.xandar.meetmanager.Gender;
 import au.com.xandar.meetmanager.Race;
@@ -31,8 +32,7 @@ public class RaceReader extends MeetManagerReader<Race> {
 			throw new ArrayIndexOutOfBoundsException("Invalid line: [" + line + "]");
 
 		Race r = new Race();
-		int i = 0;
-		r.raceId = fields[i++];
+		int i = 1;
 		r.eventNr = Integer.parseInt(fields[i++]);// 1;
 		r.eventAlpha = fields[i++];
 		r.round = Round.valueOf(fields[i++]);// Final;
@@ -45,6 +45,9 @@ public class RaceReader extends MeetManagerReader<Race> {
 		r.stroke = Stroke.valueOf(fields[i++]);// Breaststroke;
 		r.relay = Boolean.parseBoolean(fields[i++]);// false;
 		r.availableNrLanes = (fields.length > 12) ? Integer.parseInt(fields[i++]) : 0;
+
+		r.raceId = fields[0].length() == 0 ? String.valueOf(r.eventNr * 100 + r.heatNr) : fields[0];
+		r.raceEntries = new ArrayList<>();
 
 		return r;
 	}

@@ -51,7 +51,7 @@ public abstract class MeetManagerReader<T> {
 				line = reader.readLine();
 				while (line != null) {
 					// just ignore commented lines
-					if (!line.startsWith(COMMENTED_LINE))
+					if (!line.startsWith(COMMENTED_LINE) && line.length() > 0)
 						list.add(parse(line));
 
 					line = reader.readLine();
@@ -61,22 +61,22 @@ public abstract class MeetManagerReader<T> {
 				reader.close();
 			}
 
-			archive(file);
+			//archive(file);
 		}
 
 		log("file read: " + list);
 		return list;
 	}
 
-	protected void archive(File file) {
-		File archiveDir = new File(file.getParentFile() + File.pathSeparator + "archive", file.getName());
-		File destFile = new File(archiveDir, file.getName() + Calendar.getInstance());
-
-		log("archive file " + file + " to : " + destFile);
-
-		archiveDir.mkdir();
-		file.renameTo(destFile);
-	}
+//	protected void archive(File file) {
+//		File archiveDir = new File(file.getParentFile() + File.pathSeparator + "archive", file.getName());
+//		File destFile = new File(archiveDir, file.getName());
+//
+//		log("archive file " + file + " to : " + destFile);
+//
+//		archiveDir.mkdir();
+//		file.renameTo(destFile);
+//	}
 
 	abstract protected T parse(String line) throws ParseException;
 

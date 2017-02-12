@@ -27,6 +27,6 @@ public class RaceReaderTest {
 
 		Collection<Race> races = reader.readAll(new File("./data"));
 		System.out.println(races);
-		assertEquals(8, races.size());
+		assertEquals(10, races.size());
 	}
 }

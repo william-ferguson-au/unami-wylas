@@ -38,7 +38,8 @@ public class FileMeetManagerService implements MeetManagerService {
 	protected static final String PROPERTY_NAME_FIELD_DELIMITER = "field.delimiter";
 
 	private LinkedHashMap<String, String> properties = new LinkedHashMap<>();
-	private Map<String, Meet> meetCache = new HashMap<>();
+	// meetId is key
+	private Map<String, MeetRace> meetRaceCache = new HashMap<>();
 
 	public FileMeetManagerService() {
 		properties.put(PROPERTY_NAME_DATA_FILE_LOCATION, "");
@@ -88,8 +89,66 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public void start() {
-		started = true;
-		log("started.");
+		log("properties: " + properties);
+
+		try {
+			loadMeets();
+			started = true;
+			log("started.");
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			log("not started. " + e.getMessage());
+		}
+	}
+
+	private File getDataLocation() {
+		return new File(properties.get(PROPERTY_NAME_DATA_FILE_LOCATION));
+	}
+
+	protected void loadMeets() throws IOException, ParseException {
+		MeetReader reader = new MeetReader(this);
+		Collection<Meet> meetList = new ArrayList<>();
+		meetList.addAll(reader.readAll(getDataLocation()));
+		for (Meet meet : meetList) {
+			MeetRace meetRace = new MeetRace(meet);
+			meetRaceCache.put(meet.meetId, meetRace);
+			loadRaces(meetRace.meet.meetId);
+		}
+
+	}
+
+	protected void loadRaces(String meetId) throws IOException, ParseException {
+		MeetRace meetRace = meetRaceCache.get(meetId);
+		if (meetRace == null) {
+			log("Invalid meetId " + meetId);
+			throw new NullPointerException("Invalid meetId " + meetId);
+		}
+
+		RaceReader reader = new RaceReader(this, meetRace.meet.meetId);
+		Collection<Race> raceList = reader.readAll(getDataLocation());
+		for (Race race : raceList) {
+			meetRace.race.put(race.raceId, race);
+		}
+
+		loadRaceEntries(meetId);
+	}
+
+	protected void loadRaceEntries(String meetId) throws IOException, ParseException {
+		MeetRace meetRace = meetRaceCache.get(meetId);
+		if (meetRace == null) {
+			log("Invalid meetId " + meetId);
+			throw new NullPointerException("Invalid meetId " + meetId);
+		}
+
+		RaceEntryReader entryReader = new RaceEntryReader(this, meetRace.meet.meetId);
+		Collection<MeetRaceEntry> raceEntryList = entryReader.readAll(getDataLocation());
+		for (MeetRaceEntry meetRaceEntry : raceEntryList) {
+			if (meetRace.race.containsKey(meetRaceEntry.raceId)) {
+				Race race = meetRace.race.get(meetRaceEntry.raceId);
+				race.raceEntries.add(meetRaceEntry.raceEntry);
+			} else
+				log("race not found: " + meetRaceEntry);
+		}
 	}
 
 	/*
@@ -99,6 +158,8 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public void stop() {
+		meetRaceCache.clear();
+
 		started = false;
 		log("stopped.");
 	}
@@ -136,7 +197,7 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public Meet getMeet(String meetId) {
-		Meet meet = meetCache.get(meetId);
+		Meet meet = meetRaceCache.get(meetId).meet;
 
 		log("getMeet=" + meet);
 		return meet;
@@ -150,11 +211,11 @@ public class FileMeetManagerService implements MeetManagerService {
 	@Override
 	public List<MeetDescription> getMeetDescriptions() {
 		List<MeetDescription> list = new ArrayList<>();
-		Collection<Meet> meets = meetCache.values();
-		for (Meet meet : meets) {
+		Collection<MeetRace> meets = meetRaceCache.values();
+		for (MeetRace meet : meets) {
 			MeetDescription md = new MeetDescription();
-			md.meetId = meet.meetId;
-			md.description = meet.description;
+			md.meetId = meet.meet.meetId;
+			md.description = meet.meet.description;
 
 			list.add(md);
 		}
@@ -173,15 +234,9 @@ public class FileMeetManagerService implements MeetManagerService {
 	public List<Meet> getMeets() {
 		List<Meet> meetList = new ArrayList<>();
 
-		MeetReader reader = new MeetReader(this);
-		try {
-			meetList.addAll(reader.readAll(new File(properties.get(PROPERTY_NAME_DATA_FILE_LOCATION))));
-			for (Meet meet : meetList) {
-				meetCache.put(meet.meetId, meet);
-			}
-
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
+		Collection<MeetRace> entries = meetRaceCache.values();
+		for (MeetRace meetRace : entries) {
+			meetList.add(meetRace.meet);
 		}
 
 		log("getMeets: " + meetList);
@@ -199,19 +254,30 @@ public class FileMeetManagerService implements MeetManagerService {
 	public List<RaceEntry> getRaceEntries(String meetId, String raceId) {
 		log("getRaceEntries " + meetId + " " + raceId);
 
-		RaceEntry re = new RaceEntry();
-		re.competitorClub = "vinhedo";
-		re.competitorFirstName = "Luciano";
-		re.competitorId = "1";
-		re.competitorLastName = "Gobi";
-		re.heatPosition = 1;
-		re.laneNr = 4;
-
 		List<RaceEntry> list = new ArrayList<>();
-		list.add(re);
+		MeetRace meetRace = meetRaceCache.get(meetId);
+		if (meetRace == null) {
+			log("Invalid meetId " + meetId);
+			return list;
+		}
+
+		Race race = meetRace.race.get(raceId);
+		if (race == null) {
+			log("Invalid meetId " + meetId);
+			return list;
+		}
+
+		if (race.raceEntries == null || race.raceEntries.isEmpty())
+			try {
+				loadRaceEntries(meetId);
+			} catch (IOException | ParseException e) {
+				log("Error to reload race entries for meetId " + meetId + " raceId " + raceId + " " + e.getMessage());
+				e.printStackTrace();
+			}
+
+		list.addAll(race.raceEntries);
 
 		log("getRaceEntries=" + list);
-
 		return list;
 	}
 
@@ -225,13 +291,21 @@ public class FileMeetManagerService implements MeetManagerService {
 		log("getRaces " + meetId);
 
 		List<Race> list = new ArrayList<>();
-
-		RaceReader reader = new RaceReader(this, meetId);
-		try {
-			list.addAll(reader.readAll(new File(properties.get(PROPERTY_NAME_DATA_FILE_LOCATION))));
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
+		MeetRace meetRace = meetRaceCache.get(meetId);
+		if (meetRace == null) {
+			log("Invalid meetId " + meetId);
+			return list;
 		}
+
+		if (meetRace.race.isEmpty())
+			try {
+				loadRaces(meetId);
+			} catch (IOException | ParseException e) {
+				log("Error reloading races for meetId " + meetId + " " + e.getMessage());
+				e.printStackTrace();
+			}
+
+		list.addAll(meetRace.race.values());
 
 		log("getRaces=" + list);
 		return list;
@@ -246,8 +320,20 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public void raceStateChanged(String meetId, String raceId, RaceState state) {
-		// TODO Auto-generated method stub
 		log("raceStateChanged[" + meetId + "," + raceId + "," + state + "]");
+
+		if (meetRaceCache.containsKey(meetId)) {
+			MeetRace meetRace = meetRaceCache.get(meetId);
+			if (meetRace.race.containsKey(raceId)) {
+				Race race = meetRace.race.get(raceId);
+				log("before " + race);
+				race.raceState = state;
+				log("after  " + race);
+
+			} else
+				log("race not found: " + raceId);
+		} else
+			log("meet not found: " + meetId);
 	}
 
 	/*
@@ -257,7 +343,7 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public boolean testConnection() {
-		log(" testConnection=true");
+		log("testConnection=true");
 		return true;
 	}
 
@@ -270,9 +356,20 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public void updateRaceEntries(String meetId, String raceId, List<RaceEntry> entries) {
-		// TODO Auto-generated method stub
-		System.out.println(Calendar.getInstance() + ":" + this + " updateRaceEntries[" + meetId + "," + raceId + ","
-				+ entries + "]");
+		log("updateRaceEntries[" + meetId + "," + raceId + "," + entries + "]");
+
+		if (meetRaceCache.containsKey(meetId)) {
+			MeetRace meetRace = meetRaceCache.get(meetId);
+			if (meetRace.race.containsKey(raceId)) {
+				Race race = meetRace.race.get(raceId);
+				log("before " + race);
+				race.raceEntries = entries;
+				log("after  " + race);
+
+			} else
+				log("race not found: " + raceId);
+		} else
+			log("meet not found: " + meetId);
 	}
 
 	protected void log(String message) {

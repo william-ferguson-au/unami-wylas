@@ -12,38 +12,39 @@ import au.com.xandar.meetmanager.ServiceInfrastructure;
  * @author Luciano
  *
  */
-public class RaceEntryReader extends MeetManagerReader<RaceEntry> {
+public class RaceEntryReader extends MeetManagerReader<MeetRaceEntry> {
 	private String meetId;
-	private String raceId;
 
-	protected RaceEntryReader(ServiceInfrastructure serviceInfrastructure, String meetId, String raceId) {
+	protected RaceEntryReader(ServiceInfrastructure serviceInfrastructure, String meetId) {
 		super(serviceInfrastructure);
 		this.meetId = meetId;
-		this.raceId = raceId;
 	}
 
 	@Override
-	protected RaceEntry parse(String line) throws ParseException {
+	protected MeetRaceEntry parse(String line) throws ParseException {
 		String[] fields = line.split(getStringProperty(FileMeetManagerService.PROPERTY_NAME_FIELD_DELIMITER));
 
 		if (fields.length < 6)
 			throw new ArrayIndexOutOfBoundsException("Invalid line: [" + line + "]");
 
+		MeetRaceEntry mre = new MeetRaceEntry();
 		RaceEntry re = new RaceEntry();
 		int i = 0;
-		re.heatPosition = Integer.parseInt(fields[i++]);// 1;
+		mre.raceId = fields[i++];
+		mre.raceEntry = re;
+
 		re.laneNr = Integer.parseInt(fields[i++]);// 4;
 		re.competitorId = fields[i++];// "1";
 		re.competitorFirstName = fields[i++];// "Luciano";
 		re.competitorLastName = fields[i++];// "Gobi";
 		re.competitorClub = fields[i++];// "vinhedo";
 
-		return re;
+		return mre;
 	}
 
 	@Override
 	protected String getFileNamePattern() {
-		return "meet" + meetId + "-race" + raceId + ".*";
+		return "meet" + meetId + "-raceentries.*";
 	}
 
 }

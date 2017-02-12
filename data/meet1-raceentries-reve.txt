@@ -1,0 +1,19 @@
+#raceId;laneNr;competitorId;competitorFirstName;competitorLastName;competitorClub
+701;1;10;Irene Ansaloni Soares;K(70+);04m38s88c;
+701;2;5824;Vera Mariza H. de Miranda Costa;L(75+);03m00s00c;
+701;3;16448;Maria Beatriz Ricciardi;J(65+);02m14s00c;
+701;4;13206;Cinira Telles Piva;K(70+);02m07s02c;
+701;5;19308;Lilian Teresa Bucken Gobbi;I(60+);01m53s34c;
+701;6;7205;Regina Helena Mileo;I(60+);02m00s00c;
+701;7;20297;Maria Antonieta Ramalho de Castro;J(65+);02m08s00c;
+701;8;2637;Maria Terezinha Coghi;J(65+);02m45s29c;
+701;9;10127;Conceiçao das G S Ribei;J(65+);03m55s00c;
+801;1;2006;José Maria Vieira Lomonaco;K(70+);03m28s00c;
+801;2;18208;Guilherme da Silva;N(85+);02m30s00c;
+801;3;11488;Henrique Silva Reis;J(65+);01m53s00c;
+801;4;85;Alfred Jacob;L(75+);01m48s00c;
+801;5;5079;Cesar Primo Paterno;J(65+);01m33s05c;
+801;6;12575;Silvio Marcos Pierobom;J(65+);01m47s98c;
+801;7;20453;Abelardo Ferrarezi de Andrade;J(65+);01m50s00c;
+801;8;5823;Antonio Marcio Fernandes da Costa;K(70+);02m00s00c;
+801;9;13978;Benedito Monteiro Camargo;L(75+);02m30s00c;

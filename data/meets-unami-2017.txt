@@ -1,4 +1,11 @@
-1;Limeira Clube;11/03;;8
+#meetId;description;startDate;endDate;nrLanes;course
+#meetId is String
+#startDate is String with date format set in properties. Default dd/MM, where year will be current year
+#endDate if omitted, = startDate
+#nrLanes is integer
+#course = LongCourse,ShortCourse (the default if omitted),Yards
+#
+1;Limeira Clube;11/03;;10
 2;Clube Pirassununga;01/04;;6
 3;Elo Academia;07/05;;7
 4;Nosso Clube de Limeira;10/06;;8

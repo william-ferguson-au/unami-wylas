@@ -1,17 +1,22 @@
 #raceId;eventNr;eventAlpha;round;heatNr;description;gender;lowAge;highAge;distance;stroke;relay;availableNrLanes
 #
-#raceId: suggested to be = race number + heat number
+#raceId: if omitted = event number * 100 + heat number. It must be unique for each event heat of the meet
 #Gender: Male,Female,Either;
 #Round: Prelim,Semi,Final
 #Stroke: Butterfly,Backstroke,Breaststroke,Freestyle,Medley
 #Relay: true,false
 #
-101;0;;Final;1;25m Peito Feminino - Série 1;Female;0;0;25;Breaststroke;false
-102;0;;Final;2;25m Peito Feminino - Série 2;Female;0;0;25;Breaststroke;false
-201;0;;Final;1;25m Peito Masculino - Série 1;Male;0;0;25;Breaststroke;false;1
-301;0;;Final;1;50m Livre Feminino - Série 1;Female;0;0;50;Freestyle;false;0
-401;0;;Final;1;50m Livre Masculino - Série 1;Male;0;0;50;Freestyle;false;0
-501;0;;Final;1;200m Costas Feminino - Série 1;Female;0;0;200;Backstroke;false;0
-601;0;;Final;1;200m Costas Masculino - Série 2;Male;0;0;200;Backstroke;false;0
-701;0;;Final;1;4x50m Livre Feminino - Série 1;Female;0;0;200;Freestyle;true;0
-801;0;;Final;1;4x50m Medley Misto - Série 1;Either;0;0;200;Medley;true;0
+101;1;;Final;1;25m Peito Feminino - Série 1;Female;0;0;25;Breaststroke;false
+102;1;;Final;2;25m Peito Feminino - Série 2;Female;0;0;25;Breaststroke;false
+103;1;;Final;3;25m Peito Feminino - Série 3;Female;0;0;25;Breaststroke;false
+201;2;;Final;1;25m Peito Masculino - Série 1;Male;0;0;25;Breaststroke;false;1
+301;3;;Final;1;50m Livre Feminino - Série 1;Female;0;0;50;Freestyle;false;0
+401;4;;Final;1;50m Livre Masculino - Série 1;Male;0;0;50;Freestyle;false;0
+402;4;;Final;2;50m Livre Masculino - Série 1;Male;0;0;50;Freestyle;false;0
+403;4;;Final;3;50m Livre Masculino - Série 1;Male;0;0;50;Freestyle;false;0
+404;4;;Final;4;50m Livre Masculino - Série 1;Male;0;0;50;Freestyle;false;0
+405;4;;Final;5;50m Livre Masculino - Série 1;Male;0;0;50;Freestyle;false;0
+501;5;;Final;1;200m Costas Feminino - Série 1;Female;0;0;200;Backstroke;false;0
+601;6;;Final;1;200m Costas Masculino - Série 2;Male;0;0;200;Backstroke;false;0
+701;7;;Final;1;4x50m Livre Feminino - Série 1;Female;0;0;200;Freestyle;true;0
+801;8;;Final;1;4x50m Medley Misto - Série 1;Either;0;0;200;Medley;true;0

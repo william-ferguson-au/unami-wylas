@@ -52,13 +52,14 @@ public class MeetReader extends MeetManagerReader<Meet> {
 			throw new ArrayIndexOutOfBoundsException("Invalid line: [" + line + "]");
 
 		Meet meet = new Meet();
-		meet.meetId = fields[0];
-		meet.description = fields[1];
-		meet.startDate = parseDate(fields[2]);
-		meet.endDate = fields[3].isEmpty() ? meet.startDate : parseDate(fields[3]);
-		meet.nrLanes = Integer.parseInt(fields[4]);
-		// TODO: add support to long course
-		meet.course = Course.ShortCourse;
+		int i = 0;
+		meet.meetId = fields[i++];
+		meet.description = fields[i++];
+		meet.startDate = parseDate(fields[i++]);
+		meet.endDate = fields[i].isEmpty() ? meet.startDate : parseDate(fields[i]);
+		i++;
+		meet.nrLanes = Integer.parseInt(fields[i++]);
+		meet.course = fields.length > 5 && fields[i++].length() > 0 ? Course.valueOf(fields[i++]) : Course.ShortCourse;
 
 		return meet;
 	}
