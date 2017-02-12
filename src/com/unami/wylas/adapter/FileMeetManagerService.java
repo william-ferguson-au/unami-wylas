@@ -17,15 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 import au.com.xandar.meetmanager.DQItem;
-import au.com.xandar.meetmanager.Gender;
 import au.com.xandar.meetmanager.Meet;
 import au.com.xandar.meetmanager.MeetDescription;
 import au.com.xandar.meetmanager.MeetManagerService;
 import au.com.xandar.meetmanager.Race;
 import au.com.xandar.meetmanager.RaceEntry;
 import au.com.xandar.meetmanager.RaceState;
-import au.com.xandar.meetmanager.Round;
-import au.com.xandar.meetmanager.Stroke;
 
 /**
  * @author Luciano
@@ -38,9 +35,6 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	protected static final String PROPERTY_NAME_DATA_FILE_LOCATION = "data.path";
 	protected static final String PROPERTY_NAME_DATE_FORMAT = "date.format";
-	protected static final String PROPERTY_NAME_MEETS_FILE_NAME_PATTERN = "meets.filename.pattern";
-	protected static final String PROPERTY_NAME_RACES_FILE_NAME_PATTERN = "races.filename.pattern";
-	protected static final String PROPERTY_NAME_RACE_ENTRIES_FILE_NAME_PATTERN = "raceentries.filename.patter";
 	protected static final String PROPERTY_NAME_FIELD_DELIMITER = "field.delimiter";
 
 	private LinkedHashMap<String, String> properties = new LinkedHashMap<>();
@@ -49,9 +43,6 @@ public class FileMeetManagerService implements MeetManagerService {
 	public FileMeetManagerService() {
 		properties.put(PROPERTY_NAME_DATA_FILE_LOCATION, "");
 		properties.put(PROPERTY_NAME_DATE_FORMAT, "dd/MM");
-		properties.put(PROPERTY_NAME_MEETS_FILE_NAME_PATTERN, "meets[.]*.txt");
-		properties.put(PROPERTY_NAME_RACES_FILE_NAME_PATTERN, "races[.]*.txt");
-		properties.put(PROPERTY_NAME_RACE_ENTRIES_FILE_NAME_PATTERN, "raceentries[.]*.txt");
 		properties.put(PROPERTY_NAME_FIELD_DELIMITER, ";");
 	}
 
@@ -64,7 +55,7 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public LinkedHashMap<String, String> getProperties() {
-		log("properties=" + properties);
+		// log("properties=" + properties);
 		return properties;
 	}
 
@@ -206,6 +197,8 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public List<RaceEntry> getRaceEntries(String meetId, String raceId) {
+		log("getRaceEntries " + meetId + " " + raceId);
+
 		RaceEntry re = new RaceEntry();
 		re.competitorClub = "vinhedo";
 		re.competitorFirstName = "Luciano";
@@ -229,26 +222,18 @@ public class FileMeetManagerService implements MeetManagerService {
 	 */
 	@Override
 	public List<Race> getRaces(String meetId) {
-		Race r = new Race();
-		r.raceId = "r1";
-		r.availableNrLanes = 6;
-		r.description = "100m Peito";
-		r.distance = 100;
-		r.eventNr = 1;
-		r.gender = Gender.Male;
-		r.heatNr = 2;
-		r.stroke = Stroke.Breaststroke;
-		r.eventAlpha = "";
-		r.highAge = 44;
-		r.lowAge = 40;
-		r.relay = false;
-		r.round = Round.Final;
+		log("getRaces " + meetId);
 
 		List<Race> list = new ArrayList<>();
-		list.add(r);
+
+		RaceReader reader = new RaceReader(this, meetId);
+		try {
+			list.addAll(reader.readAll(new File(properties.get(PROPERTY_NAME_DATA_FILE_LOCATION))));
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		}
 
 		log("getRaces=" + list);
-
 		return list;
 	}
 

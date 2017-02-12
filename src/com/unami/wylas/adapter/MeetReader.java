@@ -6,6 +6,8 @@ package com.unami.wylas.adapter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import au.com.xandar.meetmanager.Course;
 import au.com.xandar.meetmanager.Meet;
@@ -36,6 +38,8 @@ import au.com.xandar.meetmanager.ServiceInfrastructure;
  */
 public class MeetReader extends MeetManagerReader<Meet> {
 
+	protected static final String MEETS_FILE_NAME_PATTERN = "meets.*\\.txt";
+
 	protected MeetReader(ServiceInfrastructure serviceInfrastructure) {
 		super(serviceInfrastructure);
 	}
@@ -47,13 +51,11 @@ public class MeetReader extends MeetManagerReader<Meet> {
 		if (fields.length < 5)
 			throw new ArrayIndexOutOfBoundsException("Invalid line: [" + line + "]");
 
-		DateFormat format = getDateFormat();
-
 		Meet meet = new Meet();
 		meet.meetId = fields[0];
 		meet.description = fields[1];
-		meet.startDate = format.parse(fields[2]);
-		meet.endDate = fields[3].isEmpty() ? meet.startDate : format.parse(fields[3]);
+		meet.startDate = parseDate(fields[2]);
+		meet.endDate = fields[3].isEmpty() ? meet.startDate : parseDate(fields[3]);
 		meet.nrLanes = Integer.parseInt(fields[4]);
 		// TODO: add support to long course
 		meet.course = Course.ShortCourse;
@@ -61,12 +63,21 @@ public class MeetReader extends MeetManagerReader<Meet> {
 		return meet;
 	}
 
-	private DateFormat getDateFormat() {
-		return new SimpleDateFormat(getStringProperty(FileMeetManagerService.PROPERTY_NAME_DATE_FORMAT));
+	private Date parseDate(String string) throws ParseException {
+		DateFormat format = new SimpleDateFormat(getStringProperty(FileMeetManagerService.PROPERTY_NAME_DATE_FORMAT));
+		Date date = format.parse(string);
+
+		Calendar meetDate = Calendar.getInstance();
+		meetDate.setTime(date);
+		// year not set in meet file
+		if (meetDate.get(Calendar.YEAR) == 1970)
+			meetDate.set(Calendar.YEAR, Calendar.getInstance().get(Calendar.YEAR));
+
+		return meetDate.getTime();
 	}
 
 	@Override
 	protected String getFileNamePattern() {
-		return getStringProperty(FileMeetManagerService.PROPERTY_NAME_MEETS_FILE_NAME_PATTERN);
+		return MEETS_FILE_NAME_PATTERN;
 	}
 }

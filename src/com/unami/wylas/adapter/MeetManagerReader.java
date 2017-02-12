@@ -22,6 +22,8 @@ import au.com.xandar.meetmanager.ServiceInfrastructure;
  *
  */
 public abstract class MeetManagerReader<T> {
+
+	private static final String COMMENTED_LINE = "#";
 	private DateFormat dateFormat = DateFormat.getTimeInstance(DateFormat.LONG);
 
 	protected ServiceInfrastructure serviceInfrastructure;
@@ -48,7 +50,10 @@ public abstract class MeetManagerReader<T> {
 			try {
 				line = reader.readLine();
 				while (line != null) {
-					list.add(parse(line));
+					// just ignore commented lines
+					if (!line.startsWith(COMMENTED_LINE))
+						list.add(parse(line));
+
 					line = reader.readLine();
 				}
 
@@ -76,18 +81,22 @@ public abstract class MeetManagerReader<T> {
 	abstract protected T parse(String line) throws ParseException;
 
 	public Collection<T> readAll(File path) throws IOException, ParseException {
-		log("reading meet files from path: " + path);
+		log("reading files from path: " + path);
 
 		Collection<T> list = new ArrayList<>();
 
 		if (path.isDirectory()) {
-			File[] files = path.listFiles((dir, name) -> Pattern.matches(getFileNamePattern(), name));
+			File[] files = getMatchedFiles(path, getFileNamePattern());
 			for (int i = 0; i < files.length; i++) {
 				File file = files[i];
 				list.addAll(read(file));
 			}
 		}
 		return list;
+	}
+
+	protected File[] getMatchedFiles(File path, String regexp) {
+		return path.listFiles((dir, name) -> Pattern.matches(regexp, name));
 	}
 
 	protected void log(String message) {

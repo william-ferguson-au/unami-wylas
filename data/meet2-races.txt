@@ -1,0 +1,15 @@
+#raceId;eventNr;eventAlpha;round;heatNr;description;gender;lowAge;highAge;distance;stroke;relay;availableNrLanes
+#
+#Gender: Male,Female,Either;
+#Round: Prelim,Semi,Final
+#Stroke: Butterfly,Backstroke,Breaststroke,Freestyle,Medley
+#Relay: true,false
+#
+1;0;;Final;1;100m Peito Feminino;Female;0;0;100;Breaststroke;false;;
+2;0;;Final;1;100m Peito Masculino;Male;0;0;100;Breaststroke;false;;
+3;0;;Final;1;50m Borboleta Feminino;Female;0;0;50;Butterfly;false;;
+4;0;;Final;1;50m Borboleta Masculino;Male;0;0;50;Butterfly;false;;
+5;0;;Final;1;100m Costas Feminino;Female;0;0;200;Backstroke;false;;
+6;0;;Final;1;100m Costas Masculino;Male;0;0;200;Backstroke;false;;
+7;0;;Final;1;4x50m Livre Masculino;Male;0;0;200;Freestyle;true;;
+8;0;;Final;1;4x50m Medley Feminino;Female;0;0;200;Medley;true;;
