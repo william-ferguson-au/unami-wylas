@@ -28,8 +28,9 @@ public class RaceReader extends MeetManagerReader<Race> {
 	protected Race parse(String line) throws ParseException {
 		String[] fields = line.split(getStringProperty(FileMeetManagerService.PROPERTY_NAME_FIELD_DELIMITER));
 
-		if (fields.length < 12)
+		if (fields.length < 12) {
 			throw new ArrayIndexOutOfBoundsException("Invalid line: [" + line + "]");
+		}
 
 		Race r = new Race();
 		int i = 1;

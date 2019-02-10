@@ -48,8 +48,9 @@ public class MeetReader extends MeetManagerReader<Meet> {
 	protected Meet parse(String line) throws ParseException {
 		String[] fields = line.split(getFieldDelimiter());
 
-		if (fields.length < 5)
+		if (fields.length < 5) {
 			throw new ArrayIndexOutOfBoundsException("Invalid line: [" + line + "]");
+		}
 
 		Meet meet = new Meet();
 		int i = 0;
@@ -59,20 +60,21 @@ public class MeetReader extends MeetManagerReader<Meet> {
 		meet.endDate = fields[i].isEmpty() ? meet.startDate : parseDate(fields[i]);
 		i++;
 		meet.nrLanes = Integer.parseInt(fields[i++]);
-		meet.course = fields.length > 5 && fields[i++].length() > 0 ? Course.valueOf(fields[i++]) : Course.ShortCourse;
+		meet.course = fields.length > 5 && fields[i].length() > 0 ? Course.valueOf(fields[i]) : Course.ShortCourse;
 
 		return meet;
 	}
 
 	private Date parseDate(String string) throws ParseException {
-		DateFormat format = new SimpleDateFormat(getStringProperty(FileMeetManagerService.PROPERTY_NAME_DATE_FORMAT));
+		DateFormat format = new SimpleDateFormat(getStringProperty(FileMeetManagerService.PROPERTY_NAME_MEET_DATE_FORMAT));
 		Date date = format.parse(string);
 
 		Calendar meetDate = Calendar.getInstance();
 		meetDate.setTime(date);
 		// year not set in meet file
-		if (meetDate.get(Calendar.YEAR) == 1970)
+		if (meetDate.get(Calendar.YEAR) == 1970) {
 			meetDate.set(Calendar.YEAR, Calendar.getInstance().get(Calendar.YEAR));
+		}
 
 		return meetDate.getTime();
 	}

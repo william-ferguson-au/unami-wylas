@@ -40,7 +40,7 @@ public abstract class MeetManagerReader<T> {
 		return getStringProperty(FileMeetManagerService.PROPERTY_NAME_FIELD_DELIMITER);
 	}
 
-	public Collection<T> read(File file) throws ParseException, IOException {
+	public Collection<T> read(File file) throws IOException {
 		log("parsing file " + file);
 
 		Collection<T> list = new ArrayList<>();
@@ -51,34 +51,26 @@ public abstract class MeetManagerReader<T> {
 				line = reader.readLine();
 				while (line != null) {
 					// just ignore commented lines
-					if (!line.startsWith(COMMENTED_LINE) && line.length() > 0)
-						list.add(parse(line));
-
+					if (!line.startsWith(COMMENTED_LINE) && line.length() > 0) {
+						try {
+							list.add(this.parse(line));
+						} catch (ParseException e) {
+							log("Unable to parse line: [" + line + "]. Error: " + e.getMessage());
+						}
+					}
 					line = reader.readLine();
 				}
 
 			} finally {
 				reader.close();
 			}
-
-			//archive(file);
 		}
 
 		log("file read: " + list);
 		return list;
 	}
 
-//	protected void archive(File file) {
-//		File archiveDir = new File(file.getParentFile() + File.pathSeparator + "archive", file.getName());
-//		File destFile = new File(archiveDir, file.getName());
-//
-//		log("archive file " + file + " to : " + destFile);
-//
-//		archiveDir.mkdir();
-//		file.renameTo(destFile);
-//	}
-
-	abstract protected T parse(String line) throws ParseException;
+	protected abstract T parse(String line) throws ParseException;
 
 	public Collection<T> readAll(File path) throws IOException, ParseException {
 		log("reading files from path: " + path);
@@ -104,6 +96,5 @@ public abstract class MeetManagerReader<T> {
 		System.out.println(dateFormat.format(now) + " " + this + " " + message);
 	}
 
-	abstract protected String getFileNamePattern();
-
+	protected abstract String getFileNamePattern();
 }

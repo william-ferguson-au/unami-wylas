@@ -4,9 +4,11 @@
 package com.unami.wylas.adapter;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -29,29 +31,30 @@ import au.com.xandar.meetmanager.RaceState;
  *
  */
 public class FileMeetManagerService implements MeetManagerService {
-	private DateFormat dateFormat = DateFormat.getTimeInstance(DateFormat.LONG);
+	private DateFormat timeFormat = DateFormat.getTimeInstance(DateFormat.LONG);
 
 	private static final String FILE_MEET_MANAGER_ADAPTER = "File Meet Manager Adapter";
 
 	protected static final String PROPERTY_NAME_DATA_FILE_LOCATION = "data.path";
-	protected static final String PROPERTY_NAME_DATE_FORMAT = "date.format";
+	protected static final String PROPERTY_NAME_MEET_DATE_FORMAT = "meet.date.format";
+	protected static final String PROPERTY_NAME_RESULTS_FILENAME_DATE_FORMAT = "results.filename.date.format";
 	protected static final String PROPERTY_NAME_FIELD_DELIMITER = "field.delimiter";
 
 	private LinkedHashMap<String, String> properties = new LinkedHashMap<>();
 	// meetId is key
 	private Map<String, MeetRace> meetRaceCache = new HashMap<>();
+	boolean started = false;
 
 	public FileMeetManagerService() {
-		properties.put(PROPERTY_NAME_DATA_FILE_LOCATION, "");
-		properties.put(PROPERTY_NAME_DATE_FORMAT, "dd/MM");
-		properties.put(PROPERTY_NAME_FIELD_DELIMITER, ";");
+		this.properties.put(PROPERTY_NAME_DATA_FILE_LOCATION, "");
+		this.properties.put(PROPERTY_NAME_MEET_DATE_FORMAT, "dd/MM");
+		this.properties.put(PROPERTY_NAME_RESULTS_FILENAME_DATE_FORMAT, "yyyyMMdd-hh'h'mm'm'ss");
+		this.properties.put(PROPERTY_NAME_FIELD_DELIMITER, ";");
 	}
-
-	boolean started = false;
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceInfrastructure#getProperties()
 	 */
 	@Override
@@ -62,7 +65,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceInfrastructure#getReadableName()
 	 */
 	@Override
@@ -73,7 +76,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceInfrastructure#isStarted()
 	 */
 	@Override
@@ -84,7 +87,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceInfrastructure#start()
 	 */
 	@Override
@@ -109,6 +112,7 @@ public class FileMeetManagerService implements MeetManagerService {
 		MeetReader reader = new MeetReader(this);
 		Collection<Meet> meetList = new ArrayList<>();
 		meetList.addAll(reader.readAll(getDataLocation()));
+
 		for (Meet meet : meetList) {
 			MeetRace meetRace = new MeetRace(meet);
 			meetRaceCache.put(meet.meetId, meetRace);
@@ -146,14 +150,15 @@ public class FileMeetManagerService implements MeetManagerService {
 			if (meetRace.race.containsKey(meetRaceEntry.raceId)) {
 				Race race = meetRace.race.get(meetRaceEntry.raceId);
 				race.raceEntries.add(meetRaceEntry.raceEntry);
-			} else
+			} else {
 				log("race not found: " + meetRaceEntry);
+			}
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceInfrastructure#stop()
 	 */
 	@Override
@@ -166,7 +171,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceAPI#getApiVersion()
 	 */
 	@Override
@@ -177,7 +182,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceAPI#getDQItems(java.lang.String,
 	 * java.lang.String)
 	 */
@@ -192,7 +197,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceAPI#getMeet(java.lang.String)
 	 */
 	@Override
@@ -205,7 +210,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceAPI#getMeetDescriptions()
 	 */
 	@Override
@@ -227,7 +232,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceAPI#getMeets()
 	 */
 	@Override
@@ -245,7 +250,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * au.com.xandar.meetmanager.ServiceAPI#getRaceEntries(java.lang.String,
 	 * java.lang.String)
@@ -267,13 +272,14 @@ public class FileMeetManagerService implements MeetManagerService {
 			return list;
 		}
 
-		if (race.raceEntries == null || race.raceEntries.isEmpty())
+		if (race.raceEntries == null || race.raceEntries.isEmpty()) {
 			try {
 				loadRaceEntries(meetId);
 			} catch (IOException | ParseException e) {
 				log("Error to reload race entries for meetId " + meetId + " raceId " + raceId + " " + e.getMessage());
 				e.printStackTrace();
 			}
+		}
 
 		list.addAll(race.raceEntries);
 
@@ -283,7 +289,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceAPI#getRaces(java.lang.String)
 	 */
 	@Override
@@ -297,13 +303,12 @@ public class FileMeetManagerService implements MeetManagerService {
 			return list;
 		}
 
-		if (meetRace.race.isEmpty())
-			try {
-				loadRaces(meetId);
-			} catch (IOException | ParseException e) {
-				log("Error reloading races for meetId " + meetId + " " + e.getMessage());
-				e.printStackTrace();
-			}
+		try {
+			loadRaces(meetId);
+		} catch (IOException | ParseException e) {
+			log("Error reloading races for meetId " + meetId + " " + e.getMessage());
+			e.printStackTrace();
+		}
 
 		list.addAll(meetRace.race.values());
 
@@ -313,7 +318,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * au.com.xandar.meetmanager.ServiceAPI#raceStateChanged(java.lang.String,
 	 * java.lang.String, au.com.xandar.meetmanager.RaceState)
@@ -330,15 +335,17 @@ public class FileMeetManagerService implements MeetManagerService {
 				race.raceState = state;
 				log("after  " + race);
 
-			} else
+			} else {
 				log("race not found: " + raceId);
-		} else
+			}
+		} else {
 			log("meet not found: " + meetId);
+		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see au.com.xandar.meetmanager.ServiceAPI#testConnection()
 	 */
 	@Override
@@ -349,7 +356,7 @@ public class FileMeetManagerService implements MeetManagerService {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * au.com.xandar.meetmanager.ServiceAPI#updateRaceEntries(java.lang.String,
 	 * java.lang.String, java.util.List)
@@ -357,7 +364,6 @@ public class FileMeetManagerService implements MeetManagerService {
 	@Override
 	public void updateRaceEntries(String meetId, String raceId, List<RaceEntry> entries) {
 		log("updateRaceEntries[" + meetId + "," + raceId + "," + entries + "]");
-
 		if (meetRaceCache.containsKey(meetId)) {
 			MeetRace meetRace = meetRaceCache.get(meetId);
 			if (meetRace.race.containsKey(raceId)) {
@@ -365,16 +371,41 @@ public class FileMeetManagerService implements MeetManagerService {
 				log("before " + race);
 				race.raceEntries = entries;
 				log("after  " + race);
+				MeetManagerWriter writer = new MeetManagerWriter(this);
+				String filename = this.getResultsFileName(meetId, raceId);
 
-			} else
-				log("race not found: " + raceId);
-		} else
-			log("meet not found: " + meetId);
+				try {
+					FileWriter target = new FileWriter(filename);
+
+					try {
+						writer.write(target, race, entries);
+						log("RaceEntries were written to output file: " + filename);
+					} finally {
+						if (target != null) {
+							target.close();
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				this.log("race not found: " + raceId);
+			}
+		} else {
+			this.log("meet not found: " + meetId);
+		}
+
+	}
+
+	protected String getResultsFileName(String meetId, String raceId) {
+		DateFormat formatter = new SimpleDateFormat(properties.get(PROPERTY_NAME_RESULTS_FILENAME_DATE_FORMAT));
+		Date now = Calendar.getInstance().getTime();
+		return this.getProperties().get(PROPERTY_NAME_DATA_FILE_LOCATION)
+				+ File.separator + "meet" + meetId + "-race" + raceId + "-results-" + formatter.format(now) + ".txt";
 	}
 
 	protected void log(String message) {
 		Date now = Calendar.getInstance().getTime();
-		System.out.println(dateFormat.format(now) + " " + this + " " + message);
+		System.out.println(timeFormat.format(now) + " " + this + " " + message);
 	}
-
 }
